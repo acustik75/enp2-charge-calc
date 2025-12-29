@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ENP2 Charge Calc</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 10px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 22px;
+        }
+        
+        .section {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .section h2 {
+            font-size: 16px;
+            margin-bottom: 12px;
+            color: #333;
+        }
+        
+        .field {
+            margin-bottom: 15px;
+        }
+        
+        .field label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-size: 13px;
+        }
+        
+        .field input[type="time"],
+        .field select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 15px;
+        }
+        
+        .field input:focus,
+        .field select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        /* Повзунок + поле вводу */
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .slider-container input[type="range"] {
+            flex: 1;
+            height: 6px;
+            border-radius: 5px;
+            background: #ddd;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        .slider-container input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+        }
+        
+        .slider-container input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            border: none;
+        }
+        
+        .slider-container input[type="number"] {
+            width: 70px;
+            padding: 8px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 15px;
+            text-align: center;
+        }
+        
+        .battery-container {
+            text-align: center;
+            padding: 15px;
+            background: #f0f0f0;
+            border-radius: 10px;
+            margin: 15px 0;
+        }
+        
+        .battery {
+            width: 100%;
+            max-width: 250px;
+            height: 80px;
+            border: 3px solid #333;
+            border-radius: 10px;
+            position: relative;
+            margin: 0 auto;
+            background: white;
+            overflow: hidden;
+        }
+        
+        .battery::after {
+            content: '';
+            position: absolute;
+            right: -12px;
+            top: 25%;
+            width: 12px;
+            height: 50%;
+            background: #333;
+            border-radius: 0 5px 5px 0;
+        }
+        
+        .battery-fill {
+            height: 100%;
+            background: linear-gradient(to right, #4ade80, #22c55e);
+            transition: width 0.3s ease, background 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        
+        .battery-fill.medium {
+            background: linear-gradient(to right, #fbbf24, #f59e0b);
+        }
+        
+        .battery-fill.low {
+            background: linear-gradient(to right, #f87171, #ef4444);
+        }
+        
+        .output-field {
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border: 2px solid #667eea;
+        }
+        
+        .output-field label {
+            display: block;
+            font-size: 11px;
+            color: #666;
+            margin-bottom: 3px;
+        }
+        
+        .output-field .value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .btn-reset {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            background: #ef4444;
+            color: white;
+            margin-top: 10px;
+        }
+        
+        .btn-reset:active {
+            transform: scale(0.98);
+        }
+        
+        .warning {
+            background: #fef3c7;
+            border: 2px solid #f59e0b;
+            padding: 12px;
+            border-radius: 10px;
+            margin: 15px 0;
+            color: #92400e;
+            display: none;
+            font-size: 13px;
+        }
+        
+        .warning.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⚡ ENP2 Charge Calc</h1>
+        
+        <div class="section">
+            <h2>📝 Вхідні дані</h2>
+            
+            <div class="field">
+                <label>Час початку</label>
+                <input type="time" id="startTime" value="08:00" step="900">
+            </div>
+            
+            <div class="field">
+                <label>Початковий заряд (%)</label>
+                <div class="slider-container">
+                    <input type="range" id="startChargeSlider" min="0" max="100" value="20" step="1">
+                    <input type="number" id="startCharge" min="0" max="100" value="20" step="1">
+                </div>
+            </div>
+            
+            <div class="field">
+                <label>Сила струму</label>
+                <select id="current">
+                    <option value="6">6А (1.3 кВт)</option>
+                    <option value="8">8А (1.8 кВт)</option>
+                    <option value="10">10А (2.2 кВт)</option>
+                    <option value="13">13А (2.8 кВт)</option>
+                    <option value="16">16А (3.6 кВт)</option>
+                    <option value="20">20А (4.8 кВт)</option>
+                    <option value="24">24А (5.3 кВт)</option>
+                    <option value="32" selected>32А (7.2 кВт)</option>
+                </select>
+            </div>
+            
+            <div class="field">
+                <label>Години зарядки</label>
+                <div class="slider-container">
+                    <input type="range" id="hoursSlider" min="0" max="24" value="4" step="0.25">
+                    <input type="number" id="hours" min="0" max="24" value="4" step="0.25">
+                </div>
+            </div>
+        </div>
+        
+        <div class="battery-container">
+            <div class="battery">
+                <div class="battery-fill" id="batteryFill" style="width: 20%;">20%</div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📊 Результати</h2>
+            
+            <div class="output-field">
+                <label>Час закінчення</label>
+                <div class="value" id="endTime">--:--</div>
+            </div>
+            
+            <div class="output-field">
+                <label>Кінцевий заряд (%)</label>
+                <div class="value" id="endCharge">--%</div>
+            </div>
+            
+            <div class="output-field">
+                <label>Залито кВт</label>
+                <div class="value" id="energyAdded">-- кВт·год</div>
+            </div>
+            
+            <div class="output-field">
+                <label>Вартість зарядки</label>
+                <div class="value" id="cost">-- грн</div>
+            </div>
+        </div>
+        
+        <div class="warning" id="warning">
+            ⚠️ Увага! Заряд перевищить 100%. Зменште години зарядки.
+        </div>
+        
+        <button class="btn-reset" onclick="resetFields()">🔄 Скинути</button>
+    </div>
+
+    <script>
+        // Константи
+        const BATTERY_CAPACITY = 68.8; // кВт при 100%
+        const TARIFF_DAY = 4.32; // грн/кВт·год
+        const TARIFF_NIGHT = 2.16; // грн/кВт·год (50%)
+        
+        // Потужності для різних струмів
+        const POWER_MAP = {
+            6: 1.3,
+            8: 1.8,
+            10: 2.2,
+            13: 2.8,
+            16: 3.6,
+            20: 4.8,
+            24: 5.3,
+            32: 7.2
+        };
+        
+        // Отримання елементів
+        const startTimeInput = document.getElementById('startTime');
+        const startChargeSlider = document.getElementById('startChargeSlider');
+        const startChargeInput = document.getElementById('startCharge');
+        const currentSelect = document.getElementById('current');
+        const hoursSlider = document.getElementById('hoursSlider');
+        const hoursInput = document.getElementById('hours');
+        const endTimeOutput = document.getElementById('endTime');
+        const endChargeOutput = document.getElementById('endCharge');
+        const energyAddedOutput = document.getElementById('energyAdded');
+        const costOutput = document.getElementById('cost');
+        const batteryFill = document.getElementById('batteryFill');
+        const warning = document.getElementById('warning');
+        
+        // Синхронізація повзунка і поля (початковий заряд)
+        startChargeSlider.addEventListener('input', (e) => {
+            startChargeInput.value = e.target.value;
+            calculate();
+        });
+        
+        startChargeInput.addEventListener('input', (e) => {
+            let val = parseFloat(e.target.value);
+            if (val > 100) val = 100;
+            if (val < 0) val = 0;
+            startChargeSlider.value = val;
+            e.target.value = val;
+            calculate();
+        });
+        
+        // Синхронізація повзунка і поля (години)
+        hoursSlider.addEventListener('input', (e) => {
+            hoursInput.value = e.target.value;
+            calculate();
+        });
+        
+        hoursInput.addEventListener('input', (e) => {
+            let val = parseFloat(e.target.value);
+            if (val > 24) val = 24;
+            if (val < 0) val = 0;
+            hoursSlider.value = val;
+            e.target.value = val;
+            calculate();
+        });
+        
+        // Слухачі подій
+        startTimeInput.addEventListener('input', calculate);
+        currentSelect.addEventListener('change', calculate);
+        
+        // Функція розрахунку
+        function calculate() {
+            const startCharge = parseFloat(startChargeInput.value) || 0;
+            const hours = parseFloat(hoursInput.value) || 0;
+            const current = parseInt(currentSelect.value);
+            const basePower = POWER_MAP[current];
+            const startTime = startTimeInput.value;
+            
+            if (!startTime || startCharge < 0 || startCharge > 100 || hours <= 0) {
+                return;
+            }
+            
+            // Розрахунок кінцевого заряду
+            let currentCharge = startCharge;
+            let totalCost = 0;
+            let totalEnergy = 0;
+            let remainingHours = hours;
+            let currentTime = parseTime(startTime);
+            
+            while (remainingHours > 0 && currentCharge < 100) {
+                // Визначення потужності залежно від рівня заряду
+                let power = basePower;
+                if (currentCharge >= 90) {
+                    power = basePower * 0.6;
+                } else if (currentCharge >= 80) {
+                    power = basePower * 0.4;
+                }
+                
+                // Розрахунок кроку (1 хвилина)
+                const step = 1/60; // години
+                const energyAdded = power * step; // кВт·год
+                const chargeAdded = (energyAdded / BATTERY_CAPACITY) * 100; // %
+                
+                currentCharge += chargeAdded;
+                totalEnergy += energyAdded;
+                
+                // Визначення тарифу
+                const hour = currentTime.getHours();
+                const tariff = (hour >= 23 || hour < 7) ? TARIFF_NIGHT : TARIFF_DAY;
+                totalCost += energyAdded * tariff;
+                
+                // Оновлення часу
+                currentTime.setMinutes(currentTime.getMinutes() + 1);
+                remainingHours -= step;
+                
+                if (currentCharge >= 100) {
+                    currentCharge = 100;
+                    break;
+                }
+            }
+            
+            const endCharge = Math.min(currentCharge, 100);
+            
+            // Оновлення виводу
+            endTimeOutput.textContent = formatTime(currentTime);
+            endChargeOutput.textContent = endCharge.toFixed(1) + '%';
+            energyAddedOutput.textContent = totalEnergy.toFixed(2) + ' кВт·год';
+            costOutput.textContent = totalCost.toFixed(2) + ' грн';
+            
+            // Оновлення батареї
+            updateBattery(endCharge);
+            
+            // Попередження
+            if (endCharge >= 100 && remainingHours > 0.01) {
+                warning.classList.add('show');
+            } else {
+                warning.classList.remove('show');
+            }
+        }
+        
+        // Парсинг часу
+        function parseTime(timeStr) {
+            const [hours, minutes] = timeStr.split(':').map(Number);
+            const date = new Date();
+            date.setHours(hours, minutes, 0, 0);
+            return date;
+        }
+        
+        // Форматування часу
+        function formatTime(date) {
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            return `${hours}:${minutes}`;
+        }
+        
+        // Оновлення індикатора батареї
+        function updateBattery(charge) {
+            batteryFill.style.width = charge + '%';
+            batteryFill.textContent = charge.toFixed(0) + '%';
+            
+            if (charge >= 60) {
+                batteryFill.className = 'battery-fill';
+            } else if (charge >= 30) {
+                batteryFill.className = 'battery-fill medium';
+            } else {
+                batteryFill.className = 'battery-fill low';
+            }
+        }
+        
+        // Скидання полів
+        function resetFields() {
+            startTimeInput.value = '08:00';
+            startChargeSlider.value = 20;
+            startChargeInput.value = 20;
+            currentSelect.value = '32';
+            hoursSlider.value = 4;
+            hoursInput.value = 4;
+            endTimeOutput.textContent = '--:--';
+            endChargeOutput.textContent = '--%';
+            energyAddedOutput.textContent = '-- кВт·год';
+            costOutput.textContent = '-- грн';
+            updateBattery(20);
+            warning.classList.remove('show');
+        }
+        
+        // Початковий розрахунок
+        calculate();
+    </script>
+</body>
+</html>
